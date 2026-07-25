@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0050)file:///C:/Users/ashok/OneDrive/Desktop/index.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aesthetic WebRTC Chat &amp; Media Suite</title>
 <style>
@@ -274,12 +274,17 @@
   </div>
 </div>
 
-<!-- Firebase SDKs (v8) -->
-<script src="./index_files/firebase-app.js.download"></script>
-<script src="./index_files/firebase-firestore.js.download"></script>
-<script src="./index_files/firebase-storage.js.download"></script>
+<!-- Firebase SDKs (v8 CDN Links) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <script>
+let unsubChat = null;
+let unsubAnswer = null;
+let unsubCallerCandidates = null;
+let unsubCalleeCandidates = null;
+
 const firebaseConfig = {
   apiKey: "AIzaSyC1Utqm2gFJMiYRJisnV1I0hcMy5xn9Ods",
   projectId: "ridhu-app",
@@ -304,11 +309,6 @@ let editingDocId = null;
 let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
-
-let unsubChat = null;
-let unsubAnswer = null;
-let unsubCallerCandidates = null;
-let unsubCalleeCandidates = null;
 
 function cleanupListeners() {
   if (unsubChat) { unsubChat(); unsubChat = null; }
@@ -392,20 +392,26 @@ function editMsg(id, encodedText) {
 
 async function sendFile() {
   if (!roomRef) return alert("Join a room first!");
-  const file = document.getElementById("fileInput").files[0];
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
   if (!file) return;
 
-  const fileRef = storage.ref("chatFiles/" + Date.now() + "_" + file.name);
-  await fileRef.put(file);
-  const url = await fileRef.getDownloadURL();
+  try {
+    const fileRef = storage.ref().child("chatFiles/" + Date.now() + "_" + file.name);
+    const snapshot = await fileRef.put(file);
+    const url = await snapshot.ref.getDownloadURL();
 
-  await roomRef.collection("chat").add({
-    fileName: file.name,
-    fileUrl: url,
-    type: file.type || "application/octet-stream",
-    time: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  document.getElementById("fileInput").value = "";
+    await roomRef.collection("chat").add({
+      fileName: file.name,
+      fileUrl: url,
+      type: file.type || "application/octet-stream",
+      time: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    fileInput.value = "";
+  } catch (error) {
+    console.error("File upload error:", error);
+    alert("File upload failed! Check storage rules.");
+  }
 }
 
 async function deleteMsg(id) {
@@ -423,17 +429,22 @@ async function toggleRecording() {
 
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const fileRef = storage.ref("voiceNotes/" + Date.now() + ".webm");
-        await fileRef.put(audioBlob);
-        const url = await fileRef.getDownloadURL();
+        try {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const fileRef = storage.ref().child("voiceNotes/" + Date.now() + ".webm");
+          const snapshot = await fileRef.put(audioBlob);
+          const url = await snapshot.ref.getDownloadURL();
 
-        await roomRef.collection("chat").add({
-          fileName: "Voice Note",
-          fileUrl: url,
-          type: "audio/webm",
-          time: firebase.firestore.FieldValue.serverTimestamp()
-        });
+          await roomRef.collection("chat").add({
+            fileName: "Voice Note",
+            fileUrl: url,
+            type: "audio/webm",
+            time: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          console.error("Voice upload error:", err);
+          alert("Voice note upload failed!");
+        }
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -527,9 +538,10 @@ async function answerCall() {
 
   createPeerConnection();
 
-  const calleeCandidatesColl = roomRef.collection("calleeCandidates");
+  const calleeCandidatesColl = ruleRefHelper(); // safe fallback
+  const calleeCandidatesCollReal = roomRef.collection("calleeCandidates");
   pc.onicecandidate = (e) => {
-    if (e.candidate) calleeCandidatesColl.add(e.candidate.toJSON());
+    if (e.candidate) calleeCandidatesCollReal.add(e.candidate.toJSON());
   };
 
   await pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -549,6 +561,8 @@ async function answerCall() {
     });
   });
 }
+
+function ruleRefHelper() { return null; }
 
 function createPeerConnection() {
   if (pc) pc.close();
@@ -622,43 +636,5 @@ function toggleCam() {
 }
 </script>
 
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
-
-</body></html>
+</body>
+</html>

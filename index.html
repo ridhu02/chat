@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<!-- saved from url=(0050)file:///C:/Users/ashok/OneDrive/Desktop/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aesthetic WebRTC Chat &amp; Media Suite</title>
+<style>
+  :root {
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --success: #10b981;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-main);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  .app-card {
+    width: 100%;
+    max-width: 600px;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    text-align: center;
+    color: var(--primary);
+    margin-top: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .room-box, .control-panel {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    background: #f9fafb;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--primary);
+    color: white;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  button:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  .btn-danger { background: var(--danger); }
+  .btn-danger:hover { background: var(--danger-hover); }
+  
+  .btn-success { background: var(--success); }
+
+  .video-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+
+  @media (max-width: 480px) {
+    .video-container { grid-template-columns: 1fr; }
+  }
+
+  .video-box {
+    background: #111;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4/3;
+    border: 2px solid var(--border);
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .video-tag {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+  }
+
+  #chatBox {
+    height: 220px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+
+  .msg {
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #f1f5f9;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    word-break: break-word;
+  }
+
+  .msg-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .msg img, .msg audio {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 5px;
+  }
+
+  .msg-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .msg-actions button {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: var(--text-main);
+  }
+  .msg-actions button:hover { background: #cbd5e1; }
+
+  .chat-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .file-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  input[type="file"] {
+    font-size: 12px;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-card">
+  <h2>✨ Secure Connect</h2>
+
+  <!-- Room Setup -->
+  <div class="room-box">
+    <input id="roomInput" placeholder="Enter Room ID (e.g. room123)">
+    <button onclick="joinRoom()">Join Room</button>
+  </div>
+
+  <hr>
+
+  <!-- Call Actions -->
+  <div class="control-panel">
+    <button onclick="startVoiceCall()">Voice Call</button>
+    <button onclick="startVideoCall()">Video Call</button>
+    <button class="btn-success" onclick="answerCall()">Answer</button>
+    <button class="btn-danger" onclick="hangUp()">Hang Up</button>
+  </div>
+
+  <div class="control-panel">
+    <button onclick="toggleMic()">Mute/Unmute</button>
+    <button onclick="toggleCam()">Cam On/Off</button>
+  </div>
+
+  <!-- Media Display Grid -->
+  <div class="video-container">
+    <div class="video-box">
+      <video id="localVideo" autoplay="" muted="" playsinline=""></video>
+      <div class="video-tag">You</div>
+    </div>
+    <div class="video-box">
+      <video id="remoteVideo" autoplay="" playsinline=""></video>
+      <div class="video-tag">Partner</div>
+    </div>
+  </div>
+  <audio id="remoteAudio" autoplay=""></audio>
+
+  <hr>
+
+  <!-- Chat History -->
+  <div id="chatBox"></div>
+
+  <!-- Chat Messaging & Editing Row -->
+  <div class="chat-controls">
+    <input id="msgInput" placeholder="Type a message...">
+    <button id="sendBtn" onclick="sendMsg()">Send</button>
+  </div>
+
+  <!-- File & Voice Message Row -->
+  <div class="file-row">
+    <input type="file" id="fileInput">
+    <button onclick="sendFile()">Send File</button>
+    <button id="recordBtn" onclick="toggleRecording()" class="btn-success">🎙️ Voice Note</button>
+  </div>
+</div>
+
+<!-- Firebase SDKs (v8) -->
+<script src="./index_files/firebase-app.js.download"></script>
+<script src="./index_files/firebase-firestore.js.download"></script>
+<script src="./index_files/firebase-storage.js.download"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyC1Utqm2gFJMiYRJisnV1I0hcMy5xn9Ods",
+  projectId: "ridhu-app",
+  authDomain: "ridhu-app.firebaseapp.com",
+  storageBucket: "ridhu-app.appspot.com",
+  messagingSenderId: "104880398155",
+  appId: "1:104880398155:web:d2bfa762e6fcf7a6f1d2ce"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+let roomRef;
+let pc = null;
+let localStream = null;
+let callType = "video";
+let editingDocId = null;
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+let unsubChat = null;
+let unsubAnswer = null;
+let unsubCallerCandidates = null;
+let unsubCalleeCandidates = null;
+
+function cleanupListeners() {
+  if (unsubChat) { unsubChat(); unsubChat = null; }
+  if (unsubAnswer) { unsubAnswer(); unsubAnswer = null; }
+  if (unsubCallerCandidates) { unsubCallerCandidates(); unsubCallerCandidates = null; }
+  if (unsubCalleeCandidates) { unsubCalleeCandidates(); unsubCalleeCandidates = null; }
+}
+
+async function joinRoom() {
+  const roomId = document.getElementById("roomInput").value.trim();
+  if (!roomId) return alert("Please enter a valid Room ID");
+
+  cleanupListeners();
+  await hangUp();
+
+  roomRef = db.collection("rooms").doc(roomId);
+  listenChat();
+  alert("Joined room successfully: " + roomId);
+}
+
+// --- CHAT SYSTEM WITH EDITING ---
+function listenChat() {
+  unsubChat = roomRef.collection("chat").orderBy("time", "asc").onSnapshot((snapshot) => {
+    const box = document.getElementById("chatBox");
+    box.innerHTML = "";
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const div = document.createElement("div");
+      div.className = "msg";
+
+      let contentHTML = "";
+      if (d.fileUrl) {
+        if (d.type && d.type.startsWith("image/")) {
+          contentHTML = `<div><img src="${d.fileUrl}" width="140"><br><a href="${d.fileUrl}" target="_blank">${d.fileName}</a></div>`;
+        } else if (d.type && d.type.startsWith("audio/")) {
+          contentHTML = `<div><audio controls src="${d.fileUrl}"></audio></div>`;
+        } else {
+          contentHTML = `<div><a href="${d.fileUrl}" target="_blank">${d.fileName}</a></div>`;
+        }
+      } else {
+        contentHTML = `<span>${d.text || ""}</span>`;
+      }
+
+      div.innerHTML = `
+        <div class="msg-content">${contentHTML}</div>
+        <div class="msg-actions">
+          ${!d.fileUrl ? `<button onclick="editMsg('${doc.id}', '${encodeURIComponent(d.text)}')">Edit</button>` : ''}
+          <button onclick="deleteMsg('${doc.id}')">Delete</button>
+        </div>
+      `;
+      box.appendChild(div);
+    });
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+async function sendMsg() {
+  if (!roomRef) return alert("Join a room first!");
+  const textInput = document.getElementById("msgInput");
+  const text = textInput.value.trim();
+  if (!text) return;
+
+  if (editingDocId) {
+    await roomRef.collection("chat").doc(editingDocId).update({ text });
+    editingDocId = null;
+    document.getElementById("sendBtn").innerText = "Send";
+  } else {
+    await roomRef.collection("chat").add({ 
+      text, 
+      time: firebase.firestore.FieldValue.serverTimestamp() 
+    });
+  }
+  textInput.value = "";
+}
+
+function editMsg(id, encodedText) {
+  document.getElementById("msgInput").value = decodeURIComponent(encodedText);
+  editingDocId = id;
+  document.getElementById("sendBtn").innerText = "Update";
+}
+
+async function sendFile() {
+  if (!roomRef) return alert("Join a room first!");
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return;
+
+  const fileRef = storage.ref("chatFiles/" + Date.now() + "_" + file.name);
+  await fileRef.put(file);
+  const url = await fileRef.getDownloadURL();
+
+  await roomRef.collection("chat").add({
+    fileName: file.name,
+    fileUrl: url,
+    type: file.type || "application/octet-stream",
+    time: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById("fileInput").value = "";
+}
+
+async function deleteMsg(id) {
+  if (roomRef) await roomRef.collection("chat").doc(id).delete();
+}
+
+// --- VOICE RECORDING ---
+async function toggleRecording() {
+  const btn = document.getElementById("recordBtn");
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const fileRef = storage.ref("voiceNotes/" + Date.now() + ".webm");
+        await fileRef.put(audioBlob);
+        const url = await fileRef.getDownloadURL();
+
+        await roomRef.collection("chat").add({
+          fileName: "Voice Note",
+          fileUrl: url,
+          type: "audio/webm",
+          time: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      btn.innerText = "🛑 Stop & Send";
+      btn.style.background = "#ef4444";
+    } catch (e) {
+      alert("Microphone permission denied.");
+    }
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    btn.innerText = "🎙️ Voice Note";
+    btn.style.background = "#10b981";
+  }
+}
+
+// --- MEDIA STREAM & CALLS ---
+async function acquireMedia(isVideo) {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+    document.getElementById("localVideo").srcObject = localStream;
+  } catch (err) {
+    alert("Media Permission Error.");
+    localStream = null;
+  }
+}
+
+async function startVoiceCall() {
+  if (!roomRef) return alert("Join a room first!");
+  if (pc) return alert("Call already active.");
+  callType = "voice";
+  await acquireMedia(false);
+  if (localStream) initiateCallProcess();
+}
+
+async function startVideoCall() {
+  if (!roomRef) return alert("Join a room first!");
+  if (pc) return alert("Call already active.");
+  callType = "video";
+  await acquireMedia(true);
+  if (localStream) initiateCallProcess();
+}
+
+async function initiateCallProcess() {
+  createPeerConnection();
+
+  const callerCandidatesColl = roomRef.collection("callerCandidates");
+  pc.onicecandidate = (e) => {
+    if (e.candidate) callerCandidatesColl.add(e.candidate.toJSON());
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  await roomRef.collection("offer").doc("call").set({
+    type: offer.type,
+    sdp: offer.sdp,
+    callType
+  });
+
+  unsubAnswer = roomRef.collection("answer").doc("call").onSnapshot(async snap => {
+    const data = snap.data();
+    if (data && !pc.currentRemoteDescription) {
+      await pc.setRemoteDescription(new RTCSessionDescription(data));
+    }
+  });
+
+  unsubCalleeCandidates = roomRef.collection("calleeCandidates").onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      if (change.type === "added") {
+        pc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(console.error);
+      }
+    });
+  });
+}
+
+async function answerCall() {
+  if (!roomRef) return alert("Join a room first!");
+  if (pc) return alert("Call already active.");
+
+  const offerDoc = await roomRef.collection("offer").doc("call").get();
+  if (!offerDoc.exists) return alert("No incoming call found.");
+
+  const data = offerDoc.data();
+  callType = data.callType;
+
+  await acquireMedia(callType === "video");
+  if (!localStream) return;
+
+  createPeerConnection();
+
+  const calleeCandidatesColl = roomRef.collection("calleeCandidates");
+  pc.onicecandidate = (e) => {
+    if (e.candidate) calleeCandidatesColl.add(e.candidate.toJSON());
+  };
+
+  await pc.setRemoteDescription(new RTCSessionDescription(data));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  await roomRef.collection("answer").doc("call").set({
+    type: answer.type,
+    sdp: answer.sdp
+  });
+
+  unsubCallerCandidates = roomRef.collection("callerCandidates").onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      if (change.type === "added") {
+        pc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(console.error);
+      }
+    });
+  });
+}
+
+function createPeerConnection() {
+  if (pc) pc.close();
+  
+  document.getElementById("remoteVideo").srcObject = null;
+  document.getElementById("remoteAudio").srcObject = null;
+
+  pc = new RTCPeerConnection(servers);
+
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = (event) => {
+    let remoteVideoEl = document.getElementById("remoteVideo");
+    let remoteAudioEl = document.getElementById("remoteAudio");
+    
+    let stream = remoteVideoEl.srcObject;
+    if (!stream) {
+      stream = new MediaStream();
+      remoteVideoEl.srcObject = stream;
+    }
+    if (event.streams && event.streams[0]) {
+      event.streams[0].getTracks().forEach(track => stream.addTrack(track));
+    } else {
+      stream.addTrack(event.track);
+    }
+    remoteAudioEl.srcObject = stream;
+  };
+}
+
+async function hangUp() {
+  if (unsubAnswer) { unsubAnswer(); unsubAnswer = null; }
+  if (unsubCallerCandidates) { unsubCallerCandidates(); unsubCallerCandidates = null; }
+  if (unsubCalleeCandidates) { unsubCalleeCandidates(); unsubCalleeCandidates = null; }
+
+  if (pc) { pc.close(); pc = null; }
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+
+  document.getElementById("localVideo").srcObject = null;
+  document.getElementById("remoteVideo").srcObject = null;
+  document.getElementById("remoteAudio").srcObject = null;
+
+  if (roomRef) {
+    try {
+      await roomRef.collection("offer").doc("call").delete();
+      await roomRef.collection("answer").doc("call").delete();
+      
+      const batch = db.batch();
+      const callers = await roomRef.collection("callerCandidates").get();
+      callers.forEach(doc => batch.delete(doc.ref));
+      const callees = await roomRef.collection("calleeCandidates").get();
+      callees.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    } catch (e) {}
+  }
+}
+
+function toggleMic() {
+  if (!localStream) return alert("No active stream!");
+  const track = localStream.getAudioTracks()[0];
+  if (track) track.enabled = !track.enabled;
+}
+
+function toggleCam() {
+  if (!localStream) return alert("No active stream!");
+  const tracks = localStream.getVideoTracks();
+  if (tracks.length === 0) return alert("No camera stream found.");
+  tracks[0].enabled = !tracks[0].enabled;
+}
+</script>
+
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+
+</body></html>

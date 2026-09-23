@@ -3,51 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Group Chat + Multi-User Call</title>
+<title>Secure Multi-User Chat + WebRTC Call</title>
 <style>
 *{ box-sizing:border-box; }
 body{ margin:0; padding:12px; font-family:Arial,sans-serif; background:#eef2f7; }
-.container{ max-width:900px; margin:auto; }
+.container{ max-width:800px; margin:auto; }
 h2{ text-align:center; color:#222; }
 .card{ background:white; padding:15px; margin-bottom:15px; border-radius:15px; box-shadow:0 3px 12px rgba(0,0,0,.15); }
-input[type="text"]{ width:100%; padding:13px; border-radius:10px; border:1px solid #ccc; font-size:16px; margin-bottom:10px; }
-input[type="file"]{ display:none; }
+input{ width:100%; padding:13px; border-radius:10px; border:1px solid #ccc; font-size:16px; margin-bottom:10px; }
 button{ width:100%; padding:13px; border:none; border-radius:10px; background:#1976d2; color:white; font-size:16px; margin:5px 0; cursor:pointer; }
 button:active{ transform:scale(.96); }
 .danger{ background:#e53935; }
+.warning{ background:#f57c00; }
 .row{ display:flex; gap:10px; }
 .row button{ flex:1; }
-.videoBox{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; }
-.video-card{ position:relative; background:#000; border-radius:12px; overflow:hidden; height:200px; }
-video{ width:100%; height:100%; object-fit:cover; }
-.video-card span{ position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.6); color:white; padding:2px 6px; font-size:11px; border-radius:4px; }
-#chatBox{ height:260px; overflow-y:auto; background:#f7f7f7; padding:10px; border-radius:10px; margin-bottom:10px; }
-.msg{ background:#dcf8c6; padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; word-break:break-word; }
-.msg img, .msg video, .msg audio{ max-width:100%; border-radius:8px; margin-top:5px; max-height:160px; display:block; }
-.delete{ width:auto; padding:5px 10px; background:#555; font-size:12px; border-radius:6px; cursor:pointer; }
-.file-row{ display:flex; gap:5px; margin-bottom:10px; }
-.file-row label, .file-row button{ flex:1; background:#455a64; color:white; text-align:center; padding:10px; border-radius:10px; cursor:pointer; font-size:14px; margin:0; border:none; }
-.rec-start{ background:#d32f2f !important; }
-.rec-stop{ background:#388e3c !important; }
-@media(max-width:500px){ .row{ flex-direction:column; } .file-row{ flex-direction:column; } }
+.videoBox{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; }
+video{ width:100%; height:200px; background:#000; border-radius:12px; object-fit:cover; }
+#chatBox{ height:260px; overflow-y:auto; background:#f7f7f7; padding:10px; border-radius:10px; }
+.msg{ background:#dcf8c6; padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; gap:10px; word-break:break-word; }
+.delete{ width:auto; padding:5px 10px; background:#555; font-size:12px; }
+@media(max-width:500px){ .row{ flex-direction:column; } video{ height:230px; } }
 </style>
 </head>
 <body>
 
 <div class="container">
-<h2>Group Chat + Multi-User Call</h2>
+<h2>Chat + Multi-User Video Call</h2>
 
 <div class="card">
-<input type="text" id="roomInput" placeholder="Enter Room ID">
+<input id="roomInput" placeholder="Enter Room ID">
 <button onclick="joinRoom()">Join Room</button>
 </div>
 
 <div class="card">
 <div class="row">
-<button onclick="startCall(false)">Voice Call</button>
-<button onclick="startCall(true)">Video Call</button>
-</div>
-<div class="row">
+<button onclick="startCall()">Start Call</button>
+<button class="warning" onclick="reconnectCall()">Reconnect</button>
 <button class="danger" onclick="hangUp()">End Call</button>
 </div>
 <div class="row">
@@ -59,33 +50,18 @@ video{ width:100%; height:100%; object-fit:cover; }
 <div class="card">
 <div class="videoBox" id="videoGrid">
 <!-- Local Video -->
-<div class="video-card" id="localVideoCard">
+<div style="position:relative;" id="localWrapper">
 <video id="localVideo" autoplay muted playsinline></video>
-<span>You</span>
+<span style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.5); color:white; padding:2px 6px; font-size:12px; border-radius:4px;">You</span>
 </div>
 </div>
 </div>
 
 <div class="card">
 <div id="chatBox"></div>
-
-<div class="file-row">
-<label for="imageInput">📷 Image</label>
-<label for="videoInput">🎥 Video</label>
-<label for="audioInput">🎵 Audio</label>
-</div>
-
-<div class="file-row">
-<button class="rec-start" onclick="startVoiceRecording()">🎙️ Record</button>
-<button class="rec-stop" onclick="stopVoiceRecording()">⏹️ Send Audio</button>
-</div>
-
-<input type="file" id="imageInput" accept="image/*" onchange="sendFile(this, 'image')">
-<input type="file" id="videoInput" accept="video/*" onchange="sendFile(this, 'video')">
-<input type="file" id="audioInput" accept="audio/*" onchange="sendFile(this, 'audio')">
-
-<input type="text" id="msgInput" placeholder="Type message">
-<button onclick="sendMsg()">Send Text</button>
+<br>
+<input id="msgInput" placeholder="Type message">
+<button onclick="sendMsg()">Send</button>
 </div>
 </div>
 
@@ -108,10 +84,7 @@ const db = firebase.firestore();
 let roomRef = null;
 let userId = 'user_' + Math.random().toString(36).substr(2, 9);
 let localStream = null;
-let peers = {}; // Har user ke liye alag RTCPeerConnection store hoga
-let mediaRecorder = null;
-let audioChunks = [];
-let isVideoMode = true;
+let peers = {}; 
 
 const servers = {
   iceServers: [
@@ -120,144 +93,125 @@ const servers = {
   ]
 };
 
+// CHAT SYSTEM
 function joinRoom(){
   let id = document.getElementById("roomInput").value.trim();
-  if(!id){ alert("Room ID enter karo"); return; }
-  
+  if(!id){
+    alert("Room ID enter karo");
+    return;
+  }
   roomRef = db.collection("rooms").doc(id);
   listenChat();
   alert("Room Joined Successfully!");
 }
 
-// CHAT FUNCTIONS
 function listenChat(){
   roomRef.collection("chat").orderBy("time","asc").onSnapshot(snapshot=>{
     let box = document.getElementById("chatBox");
     box.innerHTML = "";
     snapshot.forEach(doc=>{
       let d = doc.data();
-      let content = "";
-      if(d.type === "text") content = `<span>${d.text}</span>`;
-      else if(d.type === "image") content = `<img src="${d.fileData}">`;
-      else if(d.type === "video") content = `<video src="${d.fileData}" controls></video>`;
-      else if(d.type === "audio" || d.type === "voice") content = `<audio src="${d.fileData}" controls></audio>`;
-
-      box.innerHTML += `<div class="msg"><div><small style="color:#555;">${d.sender === userId ? 'You' : d.sender}</small><br>${content}</div><button class="delete" onclick="deleteMsg('${doc.id}')">X</button></div>`;
+      box.innerHTML += `
+        <div class="msg">
+          <span>${d.text || ""}</span>
+          <button class="delete" onclick="deleteMsg('${doc.id}')">X</button>
+        </div>
+      `;
     });
     box.scrollTop = box.scrollHeight;
   });
 }
 
 async function sendMsg(){
-  if(!roomRef){ alert("Pehle Room Join karo"); return; }
+  if(!roomRef){
+    alert("Join room first");
+    return;
+  }
   let input = document.getElementById("msgInput");
   let text = input.value.trim();
   if(!text) return;
-  await roomRef.collection("chat").add({ type: "text", text: text, time: Date.now(), sender: userId });
+  
+  await roomRef.collection("chat").add({
+    text: text,
+    time: Date.now(),
+    sender: userId
+  });
   input.value = "";
 }
 
-function sendFile(input, type){
-  if(!roomRef){ alert("Pehle Room Join karo"); input.value=""; return; }
-  let file = input.files[0];
-  if(!file) return;
-  if(file.size > 700 * 1024){ alert("File size 700KB se kam honi chahiye!"); input.value=""; return; }
-
-  let reader = new FileReader();
-  reader.onload = async function(e){
-    await roomRef.collection("chat").add({ type: type, fileData: e.target.result, time: Date.now(), sender: userId });
-    input.value = "";
-  };
-  reader.readAsDataURL(file);
-}
-
 async function deleteMsg(id){
-  if(roomRef) await roomRef.collection("chat").doc(id).delete();
-}
-
-async function startVoiceRecording(){
-  if(!roomRef){ alert("Pehle Room Join karo!"); return; }
-  try {
-    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = async () => {
-      let blob = new Blob(audioChunks, { type: 'audio/webm' });
-      let reader = new FileReader();
-      reader.onload = async function(e){
-        await roomRef.collection("chat").add({ type: "voice", fileData: e.target.result, time: Date.now(), sender: userId });
-      };
-      reader.readAsDataURL(blob);
-      stream.getTracks().forEach(t => t.stop());
-    };
-    mediaRecorder.start();
-    alert("Recording shuru ho gayi hai...");
-  } catch(e){ alert("Mic permission error"); }
-}
-
-function stopVoiceRecording(){
-  if(mediaRecorder && mediaRecorder.state !== "inactive"){
-    mediaRecorder.stop();
-    alert("Voice note send ho gaya!");
+  if(roomRef){
+    await roomRef.collection("chat").doc(id).delete();
   }
 }
 
-// MULTI-USER WEBRTC CALL LOGIC
-async function startCall(isVideo){
-  if(!roomRef){ alert("Pehle Room Join karo!"); return; }
-  isVideoMode = isVideo;
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideoMode });
+// MULTI-USER WEBRTC SYSTEM
+async function getMedia(){
+  if(localStream) return;
+  try{
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
     let localVid = document.getElementById("localVideo");
-    localVid.srcObject = localStream;
-    if(!isVideoMode) localVid.style.display = "none";
-  } catch(e) {
-    alert("Camera/Mic permission nahi mili!");
+    if(localVid) localVid.srcObject = localStream;
+  }catch(e){
+    alert("Camera/Mic permission allow karo");
+    console.log(e);
+  }
+}
+
+async function startCall(){
+  if(!roomRef){
+    alert("Room join karo pehle");
     return;
   }
+  await getMedia();
+  if(!localStream) return;
 
-  // Room ke andar khud ko online register karein
-  await roomRef.collection("participants").doc(userId).set({ online: true, time: Date.now() });
+  // Register user presence
+  await roomRef.collection("users").doc(userId).set({ online: true, time: Date.now() });
 
-  // Baaki users ko track karne ke liye listener lagayein
-  roomRef.collection("participants").onSnapshot(snapshot => {
-    snapshot.docChanges().forEach(change => {
-      let remoteId = change.doc.id;
-      if(remoteId === userId) return;
+  // Listen to users
+  roomRef.collection("users").onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(async change => {
+      let targetUserId = change.doc.id;
+      if(targetUserId === userId) return;
 
       if(change.type === "added"){
-        // Jo user pehle se hai ya naya aaya hai, uske sath peer connection banayein
-        // Alphabetical order se decide hoga kaun offer bhejega taaki clash na ho
-        let isInitiator = userId > remoteId;
-        createPeerConnection(remoteId, isInitiator);
+        // Jo user pehle se room mein hai ya naya aaya hai, uske sath connection banayein
+        // Alphabetical comparison se decide karte hain kaun offer banayega taaki collision na ho
+        let isInitiator = userId > targetUserId;
+        createPeerConnection(targetUserId, isInitiator);
       }
       if(change.type === "removed"){
-        if(peers[remoteId]){
-          peers[remoteId].pc.close();
-          delete peers[remoteId];
-          let card = document.getElementById("card_" + remoteId);
-          if(card) card.remove();
+        if(peers[targetUserId]){
+          peers[targetUserId].close();
+          delete peers[targetUserId];
+          let videoEl = document.getElementById("video_" + targetUserId);
+          if(videoEl) videoEl.parentElement.remove();
         }
       }
     });
   });
 
   listenSignals();
-  alert("Call Active! Dusre users ke join hone ka intezar karein.");
 }
 
-function createPeerConnection(remoteId, isInitiator){
-  if(peers[remoteId]) return peers[remoteId];
+function reconnectCall(){
+  if(!roomRef) {
+    alert("Room join karo");
+    return;
+  }
+  alert("Reconnecting call...");
+  startCall();
+}
+
+function createPeerConnection(targetUserId, isInitiator){
+  if(peers[targetUserId]){
+    return peers[targetUserId];
+  }
 
   let pc = new RTCPeerConnection(servers);
-  let remoteStream = new MediaStream();
-  let candidateQueue = [];
+  peers[targetUserId] = pc;
 
-  peers[remoteId] = { pc, candidateQueue };
-
-  // Local tracks add karein
   if(localStream){
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
   }
@@ -266,7 +220,7 @@ function createPeerConnection(remoteId, isInitiator){
     if(event.candidate){
       roomRef.collection("signals").add({
         from: userId,
-        to: remoteId,
+        to: targetUserId,
         type: "candidate",
         candidate: event.candidate.toJSON(),
         time: Date.now()
@@ -275,41 +229,54 @@ function createPeerConnection(remoteId, isInitiator){
   };
 
   pc.ontrack = event => {
-    event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+    let videoId = "video_" + targetUserId;
+    let videoElement = document.getElementById(videoId);
 
-    let cardId = "card_" + remoteId;
-    let videoCard = document.getElementById(cardId);
-
-    if(!videoCard){
+    if(!videoElement){
       let videoGrid = document.getElementById("videoGrid");
-      videoCard = document.createElement("div");
-      videoCard.className = "video-card";
-      videoCard.id = cardId;
+      let wrapper = document.createElement("div");
+      wrapper.style.position = "relative";
+      
+      videoElement = document.createElement("video");
+      videoElement.id = videoId;
+      videoElement.autoplay = true;
+      videoElement.playsInline = true;
+      
+      let label = document.createElement("span");
+      label.innerText = "User " + targetUserId.substr(5, 4);
+      label.style.cssText = "position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.5); color:white; padding:2px 6px; font-size:12px; border-radius:4px;";
+      
+      wrapper.appendChild(videoElement);
+      wrapper.appendChild(label);
+      videoGrid.appendChild(wrapper);
+    }
 
-      let vid = document.createElement("video");
-      vid.autoplay = true;
-      vid.playsInline = true;
-      vid.srcObject = remoteStream;
-
-      let span = document.createElement("span");
-      span.innerText = remoteId.substr(0, 8);
-
-      videoCard.appendChild(vid);
-      videoCard.appendChild(span);
-      videoGrid.appendChild(videoCard);
+    if(!videoElement.srcObject){
+      videoElement.srcObject = new MediaStream();
+    }
+    
+    // Check if track already exists to avoid duplication
+    let trackExists = false;
+    videoElement.srcObject.getTracks().forEach(t => {
+      if(t.id === event.track.id) trackExists = true;
+    });
+    if(!trackExists){
+      videoElement.srcObject.addTrack(event.track);
     }
   };
 
   if(isInitiator){
-    pc.createOffer().then(offer => pc.setLocalDescription(offer)).then(() => {
+    pc.createOffer().then(offer => {
+      return pc.setLocalDescription(offer);
+    }).then(() => {
       roomRef.collection("signals").add({
         from: userId,
-        to: remoteId,
+        to: targetUserId,
         type: "offer",
         offer: { type: pc.localDescription.type, sdp: pc.localDescription.sdp },
         time: Date.now()
       });
-    });
+    }).catch(err => console.log("Offer creation error:", err));
   }
 
   return pc;
@@ -321,24 +288,17 @@ function listenSignals(){
       if(change.type === "added"){
         let data = change.doc.data();
         let fromId = data.from;
+        let pc = peers[fromId];
 
-        if(!peers[fromId]){
-          createPeerConnection(fromId, false);
+        if(!pc){
+          // Agar initiator nahi tha par offer aaya hai toh connection bana lein
+          pc = createPeerConnection(fromId, false);
         }
-
-        let peerObj = peers[fromId];
-        let pc = peerObj.pc;
 
         try {
           if(data.type === "offer"){
             if(pc.signalingState === "stable" || pc.signalingState === "have-local-offer"){
               await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-              
-              while(peerObj.candidateQueue.length > 0){
-                let cand = peerObj.candidateQueue.shift();
-                await pc.addIceCandidate(new RTCIceCandidate(cand));
-              }
-
               let answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
               roomRef.collection("signals").add({
@@ -352,25 +312,17 @@ function listenSignals(){
           } else if(data.type === "answer"){
             if(pc.signalingState === "have-local-offer"){
               await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-              
-              while(peerObj.candidateQueue.length > 0){
-                let cand = peerObj.candidateQueue.shift();
-                await pc.addIceCandidate(new RTCIceCandidate(cand));
-              }
             }
           } else if(data.type === "candidate"){
-            if(data.candidate){
-              if(pc.remoteDescription){
-                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-              } else {
-                peerObj.candidateQueue.push(data.candidate);
-              }
+            if(data.candidate && pc.remoteDescription){
+              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             }
           }
         } catch(e) {
-          console.error("Signaling error:", e);
+          console.error("Signaling error with user", fromId, e);
         }
-
+        
+        // Cleanup signal doc
         change.doc.ref.delete().catch(()=>{});
       }
     });
@@ -378,44 +330,42 @@ function listenSignals(){
 }
 
 function toggleMic(){
-  if(localStream){
-    let track = localStream.getAudioTracks()[0];
-    if(track) track.enabled = !track.enabled;
-  }
+  if(!localStream) return;
+  let track = localStream.getAudioTracks()[0];
+  if(track) track.enabled = !track.enabled;
 }
 
 function toggleCam(){
-  if(localStream){
-    let track = localStream.getVideoTracks()[0];
-    if(track) track.enabled = !track.enabled;
-    else alert("Video stream active nahi hai!");
+  if(!localStream) return;
+  let track = localStream.getVideoTracks()[0];
+  if(track) {
+    track.enabled = !track.enabled;
+  } else {
+    alert("Camera available nahi hai");
   }
 }
 
 async function hangUp(){
   if(roomRef && userId){
-    await roomRef.collection("participants").doc(userId).delete().catch(()=>{});
+    await roomRef.collection("users").doc(userId).delete().catch(()=>{});
   }
-
   for(let key in peers){
-    peers[key].pc.close();
+    peers[key].close();
   }
   peers = {};
 
   if(localStream){
-    localStream.getTracks().forEach(t => t.stop());
+    localStream.getTracks().forEach(track => track.stop());
     localStream = null;
   }
 
   let videoGrid = document.getElementById("videoGrid");
   videoGrid.innerHTML = `
-    <div class="video-card" id="localVideoCard">
+    <div style="position:relative;" id="localWrapper">
       <video id="localVideo" autoplay muted playsinline></video>
-      <span>You</span>
+      <span style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.5); color:white; padding:2px 6px; font-size:12px; border-radius:4px;">You</span>
     </div>
   `;
-
-  alert("Call Cut ho gayi hai.");
 }
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Multi-User Chat + Auto Host + WebRTC Call</title>
+<title>Secure Multi-User Chat + Host Control + WebRTC Call</title>
 <style>
 *{ box-sizing:border-box; }
 body{ margin:0; padding:12px; font-family:Arial,sans-serif; background:#eef2f7; }
@@ -78,8 +78,7 @@ video{ width:100%; height:100%; object-fit:cover; }
 
 <div class="card">
 <div id="chatBox"></div>
-<input type="text" id="msgInput" placeholder="Type message">
-<button onclick="sendMsg()">Send Text</button>
+
 <div class="file-row">
 <label for="imageInput">📷 Image</label>
 <label for="videoInput">🎥 Video</label>
@@ -95,7 +94,8 @@ video{ width:100%; height:100%; object-fit:cover; }
 <input type="file" id="videoInput" accept="video/*" onchange="sendFile(this, 'video')">
 <input type="file" id="audioInput" accept="audio/*" onchange="sendFile(this, 'audio')">
 
-
+<input type="text" id="msgInput" placeholder="Type message">
+<button onclick="sendMsg()">Send Text</button>
 </div>
 </div>
 
@@ -137,18 +137,17 @@ async function joinRoom(){
   let id = document.getElementById("roomInput").value.trim();
   
   if(!nameInp){
-    alert("First, Enter your Name!");
+    alert("Please enter your name!");
     return;
   }
   if(!id){
-    alert("Enter Room ID !");
+    alert("Please enter a Room ID!");
     return;
   }
 
   userName = nameInp;
   roomRef = db.collection("rooms").doc(id);
 
-  // Auto-assign host: Agar room pehle se nahi bana hai toh ye user host ban jayega
   try {
     await db.runTransaction(async (transaction) => {
       let doc = await transaction.get(roomRef);
@@ -169,7 +168,7 @@ async function joinRoom(){
 
   listenChat();
   listenHostCommands();
-  alert("Room Joined Successfully as " + (isHost ? "Host 👑" : userName) + "!");
+  alert("Room joined successfully as " + (isHost ? "Host 👑" : userName) + "!");
 }
 
 function listenChat(){
@@ -213,7 +212,7 @@ function listenChat(){
 }
 
 async function sendMsg(){
-  if(!roomRef){ alert("Pehle Room join karo!"); return; }
+  if(!roomRef){ alert("Please join a room first!"); return; }
   let input = document.getElementById("msgInput");
   let text = input.value.trim();
   if(!text) return;
@@ -237,12 +236,12 @@ async function editMsg(id, encodedText){
 }
 
 function sendFile(inputElement, type){
-  if(!roomRef){ alert("Pehle Room join karo!"); inputElement.value = ""; return; }
+  if(!roomRef){ alert("Please join a room first!"); inputElement.value = ""; return; }
   let file = inputElement.files[0];
   if(!file) return;
 
   if(file.size > 800 * 1024){
-    alert("File size bahut badi hai! 800KB se choti file select karein.");
+    alert("File size is too large! Please select a file smaller than 800KB.");
     inputElement.value = "";
     return;
   }
@@ -262,7 +261,7 @@ function sendFile(inputElement, type){
 }
 
 async function startVoiceRecording(){
-  if(!roomRef){ alert("Pehle Room join karo!"); return; }
+  if(!roomRef){ alert("Please join a room first!"); return; }
   try {
     let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioChunks = [];
@@ -286,16 +285,16 @@ async function startVoiceRecording(){
     };
 
     mediaRecorder.start();
-    alert("🎙️ Recording Start....");
+    alert("🎙️ Voice recording started...");
   } catch(e) {
-    alert("Microphone permission nahi mili!");
+    alert("Microphone permission denied!");
   }
 }
 
 function stopVoiceRecording(){
   if(mediaRecorder && mediaRecorder.state !== "inactive"){
     mediaRecorder.stop();
-    alert("⏹️ Voice message sent!");
+    alert("⏹️ Voice message sent successfully!");
   }
 }
 
@@ -311,10 +310,10 @@ function listenHostCommands(){
         if(localStream){
           let track = localStream.getAudioTracks()[0];
           if(track) track.enabled = false;
-          alert("Host mute your mic!");
+          alert("The host has muted your microphone!");
         }
       } else if(cmd.action === "kick"){
-        alert("Host removed you!");
+        alert("You have been kicked out of the room by the host!");
         hangUp();
       }
       doc.ref.delete().catch(()=>{});
@@ -329,12 +328,12 @@ async function getMedia(){
     let localVid = document.getElementById("localVideo");
     if(localVid) localVid.srcObject = localStream;
   }catch(e){
-    alert("Camera/Mic permission allow karo");
+    alert("Please allow Camera and Microphone permissions.");
   }
 }
 
 async function startCall(){
-  if(!roomRef){ alert("First, join room"); return; }
+  if(!roomRef){ alert("Please join a room first."); return; }
   await getMedia();
   if(!localStream) return;
 
@@ -370,7 +369,7 @@ async function startCall(){
 }
 
 function reconnectCall(){
-  if(!roomRef) { alert("Please Join Room"); return; }
+  if(!roomRef) { alert("Please join a room first."); return; }
   alert("Reconnecting call...");
   startCall();
 }
@@ -480,7 +479,7 @@ function hostAction(targetId, actionType){
     action: actionType,
     time: Date.now()
   });
-  alert("Command sent to user!");
+  alert("Command sent successfully!");
 }
 
 function listenSignals(){

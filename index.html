@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Multi-User Chat + Local Clear Chat + WebRTC Call</title>
+<title>Secure Multi-User Chat + Local Clear Chat + WebRTC Call + Flip Camera</title>
 <style>
 *{ box-sizing:border-box; }
 body{ margin:0; padding:12px; font-family:Arial,sans-serif; background:#eef2f7; }
@@ -46,7 +46,7 @@ video{ width:100%; height:100%; object-fit:cover; }
 <body>
 
 <div class="container">
-<h2>Chat + Host Control + Clear Chat</h2>
+<h2>Chat + Host Control + Clear Chat + Flip Camera</h2>
 
 <div class="card">
 <input type="text" id="nameInput" placeholder="Enter Your Name">
@@ -63,6 +63,7 @@ video{ width:100%; height:100%; object-fit:cover; }
 <div class="row">
 <button onclick="toggleMic()">Mic</button>
 <button onclick="toggleCam()">Camera</button>
+<button class="warning" onclick="switchCamera()">🔄 Flip Cam</button>
 </div>
 </div>
 
@@ -100,8 +101,6 @@ video{ width:100%; height:100%; object-fit:cover; }
 <input type="file" id="imageInput" accept="image/*" onchange="sendFile(this, 'image')">
 <input type="file" id="videoInput" accept="video/*" onchange="sendFile(this, 'video')">
 <input type="file" id="audioInput" accept="audio/*" onchange="sendFile(this, 'audio')">
-
-
 </div>
 </div>
 
@@ -128,9 +127,11 @@ let isHost = false;
 let localStream = null;
 let peers = {}; 
 
+let useFrontCamera = true; // Tracks current camera state
+
 let mediaRecorder = null;
 let audioChunks = [];
-let localClearedTime = 0; // Tracks when the user cleared their local chat view
+let localClearedTime = 0;
 
 const servers = {
   iceServers: [
@@ -184,12 +185,9 @@ function listenChat(){
     box.innerHTML = "";
     snapshot.forEach(doc=>{
       let d = doc.data();
-      
-      // Skip messages that came before the user cleared their own screen
       if (d.time <= localClearedTime) return;
 
       let content = "";
-
       if(d.type === "text" || !d.type){
         content = `<span>${d.text || ""}</span>`;
       } else if(d.type === "image"){
@@ -321,7 +319,6 @@ function clearChat(){
       alert("Only the Host can clear chat for everyone!");
       return;
     }
-    // Host clears from database for everyone
     roomRef.collection("chat").get().then(snapshot => {
       let batch = db.batch();
       snapshot.docs.forEach((doc) => {
@@ -332,7 +329,6 @@ function clearChat(){
       });
     });
   } else {
-    // Clear chat locally for this user only
     localClearedTime = Date.now();
     document.getElementById("chatBox").innerHTML = "";
     alert("Chat cleared for you successfully!");
@@ -359,14 +355,36 @@ function listenHostCommands(){
 }
 
 async function getMedia(){
-  if(localStream) return;
   try{
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    if(localStream){
+      localStream.getTracks().forEach(track => track.stop());
+    }
+    
+    let constraints = {
+      audio: true,
+      video: { facingMode: useFrontCamera ? "user" : "environment" }
+    };
+
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
     let localVid = document.getElementById("localVideo");
     if(localVid) localVid.srcObject = localStream;
+
+    // Update tracks for active peer connections if call is ongoing
+    for(let id in peers){
+      let sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
+      if(sender){
+        let videoTrack = localStream.getVideoTracks()[0];
+        sender.replaceTrack(videoTrack);
+      }
+    }
   }catch(e){
     alert("Please allow Camera and Microphone permissions.");
   }
+}
+
+async function switchCamera(){
+  useFrontCamera = !useFrontCamera;
+  await getMedia();
 }
 
 async function startCall(){
@@ -603,4 +621,4 @@ async function hangUp(){
 }
 </script>
 </body>
-</html>
+</html>-

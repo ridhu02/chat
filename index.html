@@ -97,7 +97,8 @@ body{ margin:0; padding:16px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, s
 .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 h2{ text-align:center; color:var(--text-main); margin: 0; font-weight: 600; font-size: 22px; flex: 1; }
 
-.theme-select { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; outline: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+.controls-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.theme-select { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; outline: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
 .card{ background:var(--card-bg); padding:20px; margin-bottom:16px; border-radius:16px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.08); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
 
@@ -121,8 +122,8 @@ button:active{ transform:scale(.98); }
 
 /* Video Mirror Correction Fixes */
 video { width: 100%; height: 100%; object-fit: cover; }
-#localVideo { transform: scaleX(-1); } /* Apni video mirror rahegi */
-.video-card video:not(#localVideo) { transform: scaleX(-1); } /* Doosre user ki video ka left-right fix */
+#localVideo { transform: scaleX(-1); }
+.video-card video:not(#localVideo) { transform: scaleX(-1); }
 
 .video-overlay{ position:absolute; bottom:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index: 2; }
 .video-label{ background:rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); color:white; padding:4px 10px; font-size:12px; border-radius:6px; font-weight: 500; }
@@ -133,22 +134,23 @@ video { width: 100%; height: 100%; object-fit: cover; }
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   background: var(--input-bg);
-  padding: 14px;
+  padding: 12px;
   border-radius: 14px;
   margin-top: 8px;
   border: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
 .control-btn {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -159,7 +161,7 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .control-btn:hover { opacity: 0.85; }
 .control-btn:active { transform: scale(0.9); }
 .control-btn.active-off { background: var(--danger-color) !important; color: white !important; }
-.control-btn.hangup-btn { background: var(--danger-color); color: white; width: 60px; height: 60px; font-size: 24px; }
+.control-btn.hangup-btn { background: var(--danger-color); color: white; width: 56px; height: 56px; font-size: 22px; }
 
 .chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .chat-header b { font-size: 16px; letter-spacing: 0.3px; }
@@ -183,17 +185,20 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .rec-start{ background: var(--danger-color) !important; color: white !important; border: none !important; }
 .rec-stop{ background: var(--success-color) !important; color: white !important; border: none !important; }
 
-/* 📱 Mobile Specific Layout */
+/* 📱 Responsive Mobile Layout Improvements */
 @media(max-width:600px){ 
+  body { padding: 8px; }
+  .container { max-width: 100%; }
+  .card { padding: 12px; border-radius: 12px; }
   .row { flex-direction: column; } 
   .file-row { flex-direction: column; } 
   
   .videoBox { 
     grid-template-columns: repeat(2, 1fr); 
-    gap: 8px; 
+    gap: 6px; 
   }
   .video-card { 
-    height: 150px; 
+    height: 160px; 
     border-radius: 10px;
   }
   .video-label { 
@@ -201,13 +206,14 @@ video { width: 100%; height: 100%; object-fit: cover; }
     padding: 3px 6px; 
   }
   .video-overlay {
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
   }
-  .call-controls-bar { gap: 10px; padding: 10px; }
-  .control-btn { width: 45px; height: 45px; font-size: 18px; }
-  .control-btn.hangup-btn { width: 52px; height: 52px; font-size: 20px; }
+  .call-controls-bar { gap: 8px; padding: 10px; }
+  .control-btn { width: 42px; height: 42px; font-size: 16px; }
+  .control-btn.hangup-btn { width: 48px; height: 48px; font-size: 18px; }
+  .theme-select { font-size: 11px; padding: 6px 8px; }
 }
 </style>
 </head>
@@ -215,14 +221,26 @@ video { width: 100%; height: 100%; object-fit: cover; }
 
 <div class="container">
 <div class="header-container">
-  <h2>🎥 Video Call & Secure Chat</h2>
-  <select class="theme-select" id="themeSelector" onchange="changeTheme(this.value)">
-    <option value="skyblue-white">🩵 Sky Blue & White</option>
-    <option value="pink-white">🩷 Soft Pink & White</option>
-    <option value="lavender-white">💜 Lavender & White</option>
-    <option value="mint-white">💚 Mint Green & White</option>
-    <option value="dark">🌙 Dark Midnight</option>
-  </select>
+  <h2>🎥 Video Call & Chat</h2>
+  <div class="controls-group">
+    <!-- Video Filter Selector -->
+    <select class="theme-select" id="filterSelector" onchange="applyVideoFilter(this.value)">
+      <option value="none">✨ Normal</option>
+      <option value="grayscale(100%)">⚫ Grayscale</option>
+      <option value="sepia(100%)">📜 Sepia</option>
+      <option value="contrast(140%)">🔆 High Contrast</option>
+      <option value="brightness(125%)">💡 Bright</option>
+      <option value="hue-rotate(90deg)">🎨 Cool Hue</option>
+    </select>
+    
+    <select class="theme-select" id="themeSelector" onchange="changeTheme(this.value)">
+      <option value="skyblue-white">🩵 Sky Blue</option>
+      <option value="pink-white">🩷 Soft Pink</option>
+      <option value="lavender-white">💜 Lavender</option>
+      <option value="mint-white">💚 Mint</option>
+      <option value="dark">🌙 Dark</option>
+    </select>
+  </div>
 </div>
 
 <div class="card">
@@ -249,7 +267,7 @@ video { width: 100%; height: 100%; object-fit: cover; }
 <button class="control-btn" id="camBtn" onclick="toggleCam()" title="Camera On/Off">📹</button>
 <button class="control-btn" onclick="switchCamera()" title="Flip Camera">🔄</button>
 <button class="control-btn hangup-btn" onclick="hangUp()" title="End Call">📞</button>
-<button class="control-btn" onclick="reconnectCall()" title="Reconnect" style="background:var(--warning-color); color:white; font-size:14px;">🔄</button>
+<button class="control-btn" onclick="reconnectCall()" title="Reconnect" style="background:var(--warning-color); color:white; font-size:13px;">🔄</button>
 </div>
 </div>
 
@@ -293,6 +311,13 @@ video { width: 100%; height: 100%; object-fit: cover; }
 function changeTheme(themeName) {
   document.body.setAttribute("data-theme", themeName);
   localStorage.setItem("preferred_theme", themeName);
+}
+
+function applyVideoFilter(filterVal) {
+  let localVid = document.getElementById("localVideo");
+  if(localVid) {
+    localVid.style.filter = filterVal;
+  }
 }
 
 window.onload = function() {
@@ -550,7 +575,11 @@ async function getMedia(){
 
     localStream = await navigator.mediaDevices.getUserMedia(constraints);
     let localVid = document.getElementById("localVideo");
-    if(localVid) localVid.srcObject = localStream;
+    if(localVid) {
+      localVid.srcObject = localStream;
+      let currentFilter = document.getElementById("filterSelector").value;
+      localVid.style.filter = currentFilter;
+    }
 
     for(let id in peers){
       let sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');

@@ -3,50 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Multi-User Chat + Local Clear Chat + WebRTC Call + Flip Camera</title>
+<title>Advanced Secure Multi-User Video Call & Chat</title>
 <style>
+/* Default Theme: Sky Blue & White */
+:root {
+  --primary-color: #0284c7;
+  --primary-hover: #0369a1;
+  --bg-color: #f0f9ff;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #bae6fd;
+  --input-bg: #f8fafc;
+  --chat-bg: #f8fafc;
+  --msg-bg: #e0f2fe;
+  --danger-color: #ef4444;
+  --success-color: #22c55e;
+  --warning-color: #f59e0b;
+}
+
+/* Soft Pink & White Theme */
+[data-theme="pink-white"] {
+  --primary-color: #db2777;
+  --primary-hover: #be185d;
+  --bg-color: #fdf2f8;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-muted: #9ca3af;
+  --border-color: #fbcfe8;
+  --input-bg: #faf5f9;
+  --chat-bg: #faf5f9;
+  --msg-bg: #fce7f3;
+  --danger-color: #e11d48;
+  --success-color: #16a34a;
+  --warning-color: #d97706;
+}
+
+/* Lavender & White Theme */
+[data-theme="lavender-white"] {
+  --primary-color: #7c3aed;
+  --primary-hover: #6d28d9;
+  --bg-color: #f5f3ff;
+  --card-bg: #ffffff;
+  --text-main: #1e1b4b;
+  --text-muted: #6b7280;
+  --border-color: #ddd6fe;
+  --input-bg: #faf5ff;
+  --chat-bg: #faf5ff;
+  --msg-bg: #ede9fe;
+  --danger-color: #dc2626;
+  --success-color: #059669;
+  --warning-color: #d97706;
+}
+
+/* Mint Green & White Theme */
+[data-theme="mint-white"] {
+  --primary-color: #0d9488;
+  --primary-hover: #0f766e;
+  --bg-color: #f0fdf4;
+  --card-bg: #ffffff;
+  --text-main: #022c22;
+  --text-muted: #6b7280;
+  --border-color: #99f6e4;
+  --input-bg: #f4fbf7;
+  --chat-bg: #f4fbf7;
+  --msg-bg: #ccfbf1;
+  --danger-color: #dc2626;
+  --success-color: #16a34a;
+  --warning-color: #d97706;
+}
+
+/* Dark Midnight Theme */
+[data-theme="dark"] {
+  --primary-color: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --bg-color: #0b0f19;
+  --card-bg: #111827;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-color: #1f2937;
+  --input-bg: #0b0f19;
+  --chat-bg: #0b0f19;
+  --msg-bg: #1f2937;
+  --danger-color: #ef4444;
+  --success-color: #22c55e;
+  --warning-color: #f59e0b;
+}
+
 *{ box-sizing:border-box; }
-body{ margin:0; padding:12px; font-family:Arial,sans-serif; background:#eef2f7; }
-.container{ max-width:800px; margin:auto; }
-h2{ text-align:center; color:#222; }
-.card{ background:white; padding:15px; margin-bottom:15px; border-radius:15px; box-shadow:0 3px 12px rgba(0,0,0,.15); }
-input[type="text"]{ width:100%; padding:13px; border-radius:10px; border:1px solid #ccc; font-size:16px; margin-bottom:10px; }
+body{ margin:0; padding:16px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:var(--bg-color); color:var(--text-main); transition: background 0.3s, color 0.3s; }
+.container{ max-width:850px; margin:auto; }
+
+.header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+h2{ text-align:center; color:var(--text-main); margin: 0; font-weight: 600; font-size: 22px; flex: 1; }
+
+.theme-select { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; outline: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+
+.card{ background:var(--card-bg); padding:20px; margin-bottom:16px; border-radius:16px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.08); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
+
+input[type="text"]{ width:100%; padding:14px; border-radius:12px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-main); font-size:15px; margin-bottom:12px; outline: none; transition: border-color 0.2s; }
+input[type="text"]:focus { border-color: var(--primary-color); }
 input[type="file"]{ display:none; }
-button{ width:100%; padding:13px; border:none; border-radius:10px; background:#1976d2; color:white; font-size:16px; margin:5px 0; cursor:pointer; }
-button:active{ transform:scale(.96); }
-.danger{ background:#e53935; }
-.warning{ background:#f57c00; }
-.row{ display:flex; gap:10px; }
+
+button{ width:100%; padding:14px; border:none; border-radius:12px; background:var(--primary-color); color:white; font-size:15px; font-weight: 600; margin:6px 0; cursor:pointer; transition: background 0.2s, transform 0.1s; }
+button:hover { background: var(--primary-hover); }
+button:active{ transform:scale(.98); }
+
+.danger{ background:var(--danger-color); }
+.warning{ background:var(--warning-color); }
+.row{ display:flex; gap:12px; }
 .row button{ flex:1; }
-.videoBox{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; }
-.video-card{ position:relative; background:#000; border-radius:12px; overflow:hidden; height:200px; }
+
+/* Video Box Hidden by Default */
+.video-section { display: none; }
+
+.videoBox{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-bottom: 12px; }
+.video-card{ position:relative; background:#000; border-radius:14px; overflow:hidden; height:220px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 video{ width:100%; height:100%; object-fit:cover; }
-.video-overlay{ position:absolute; bottom:10px; left:10px; right:10px; display:flex; justify-content:space-between; align-items:center; }
-.video-label{ background:rgba(0,0,0,0.6); color:white; padding:2px 6px; font-size:11px; border-radius:4px; }
-.host-controls{ display:flex; gap:4px; }
-.host-btn{ background:#d32f2f; color:white; border:none; padding:3px 6px; font-size:10px; border-radius:4px; cursor:pointer; }
-.chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.clear-chat-btn { width: auto; padding: 6px 12px; background: #e53935; font-size: 12px; margin: 0; border-radius: 6px; }
-#chatBox{ height:280px; overflow-y:auto; background:#f7f7f7; padding:10px; border-radius:10px; margin-bottom:10px; }
-.msg{ background:#dcf8c6; padding:10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; word-break:break-word; }
+
+#localVideo { transform: scaleX(-1); }
+
+.video-overlay{ position:absolute; bottom:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index: 2; }
+.video-label{ background:rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); color:white; padding:4px 10px; font-size:12px; border-radius:6px; font-weight: 500; }
+.host-controls{ display:flex; gap:6px; }
+.host-btn{ background:var(--danger-color); color:white; border:none; padding:4px 8px; font-size:11px; border-radius:6px; cursor:pointer; font-weight: 600; }
+
+.call-controls-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  background: var(--input-bg);
+  padding: 14px;
+  border-radius: 14px;
+  margin-top: 8px;
+  border: 1px solid var(--border-color);
+}
+.control-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease;
+}
+.control-btn:hover { opacity: 0.85; }
+.control-btn:active { transform: scale(0.9); }
+.control-btn.active-off { background: var(--danger-color) !important; color: white !important; }
+.control-btn.hangup-btn { background: var(--danger-color); color: white; width: 60px; height: 60px; font-size: 24px; }
+
+.chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.chat-header b { font-size: 16px; letter-spacing: 0.3px; }
+.clear-chat-btn { width: auto; padding: 6px 12px; background: var(--danger-color); font-size: 12px; margin: 0; border-radius: 8px; color: white; }
+
+#chatBox{ height:300px; overflow-y:auto; background:var(--chat-bg); padding:12px; border-radius:12px; margin-bottom:12px; border: 1px solid var(--border-color); }
+.msg{ background:var(--msg-bg); padding:12px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; word-break:break-word; }
 .msg-content { display: flex; flex-direction: column; width: 100%; }
-.msg-name { font-size: 11px; font-weight: bold; color: #1976d2; margin-bottom: 3px; }
-.msg img, .msg video, .msg audio{ max-width:100%; border-radius:8px; margin-top:5px; max-height:160px; display:block; }
-.btn-group { display: flex; gap: 5px; align-items: center; }
-.action-btn{ width:auto; padding:5px 8px; background:#555; font-size:11px; border-radius:6px; cursor:pointer; border:none; color:white; margin:0; }
-.edit-btn{ background:#f57c00; }
-.delete-btn{ background:#e53935; }
-.file-row{ display:flex; gap:5px; margin-bottom:10px; }
-.file-row label, .file-row button{ flex:1; background:#455a64; color:white; text-align:center; padding:10px; border-radius:10px; cursor:pointer; font-size:14px; margin:0; border:none; }
-.rec-start{ background:#d32f2f !important; }
-.rec-stop{ background:#388e3c !important; }
-@media(max-width:500px){ .row{ flex-direction:column; } .file-row{ flex-direction:column; } }
+.msg-name { font-size: 12px; font-weight: bold; color: var(--primary-color); margin-bottom: 4px; }
+.msg img, .msg video, .msg audio{ max-width:100%; border-radius:8px; margin-top:6px; max-height:180px; display:block; }
+
+.btn-group { display: flex; gap: 6px; align-items: center; }
+.action-btn{ width:auto; padding:6px 10px; background:var(--card-bg); border: 1px solid var(--border-color); font-size:11px; border-radius:6px; cursor:pointer; color:var(--text-main); margin:0; }
+.edit-btn{ background: var(--warning-color); color: white !important; border:none !important; }
+.delete-btn{ background: var(--danger-color); color: white !important; border:none !important; }
+
+.file-row{ display:flex; gap:8px; margin-bottom:10px; }
+.file-row label, .file-row button{ flex:1; background:var(--input-bg); border: 1px solid var(--border-color); color:var(--text-main); text-align:center; padding:12px; border-radius:10px; cursor:pointer; font-size:14px; margin:0; font-weight: 500; transition: background 0.2s; }
+.file-row label:hover, .file-row button:hover { opacity: 0.8; }
+
+.rec-start{ background: var(--danger-color) !important; color: white !important; border: none !important; }
+.rec-stop{ background: var(--success-color) !important; color: white !important; border: none !important; }
+
+@media(max-width:500px){ 
+  .row{ flex-direction:column; } 
+  .file-row{ flex-direction:column; } 
+}
 </style>
 </head>
-<body>
+<body data-theme="skyblue-white">
 
 <div class="container">
-<h2>Chat + Host Control + Clear Chat + Flip Camera</h2>
+<div class="header-container">
+  <h2>🎥 Video Call & Secure Chat</h2>
+  <!-- Pastel Dual Color Theme Selector -->
+  <select class="theme-select" id="themeSelector" onchange="changeTheme(this.value)">
+    <option value="skyblue-white">🩵 Sky Blue & White</option>
+    <option value="pink-white">🩷 Soft Pink & White</option>
+    <option value="lavender-white">💜 Lavender & White</option>
+    <option value="mint-white">💚 Mint Green & White</option>
+    <option value="dark">🌙 Dark Midnight</option>
+  </select>
+</div>
 
 <div class="card">
 <input type="text" id="nameInput" placeholder="Enter Your Name">
@@ -54,20 +209,8 @@ video{ width:100%; height:100%; object-fit:cover; }
 <button onclick="joinRoom()">Join Room</button>
 </div>
 
-<div class="card">
-<div class="row">
-<button onclick="startCall()">Start Call</button>
-<button class="warning" onclick="reconnectCall()">Reconnect</button>
-<button class="danger" onclick="hangUp()">End Call</button>
-</div>
-<div class="row">
-<button onclick="toggleMic()">Mic</button>
-<button onclick="toggleCam()">Camera</button>
-<button class="warning" onclick="switchCamera()">🔄 Flip Cam</button>
-</div>
-</div>
-
-<div class="card">
+<!-- Video Call Section (Hidden initially) -->
+<div class="card video-section" id="videoSection">
 <div class="videoBox" id="videoGrid">
 <!-- Local Video -->
 <div class="video-card" id="localWrapper">
@@ -77,16 +220,32 @@ video{ width:100%; height:100%; object-fit:cover; }
 </div>
 </div>
 </div>
+
+<!-- Floating Call Controls Bar -->
+<div class="call-controls-bar">
+<button class="control-btn" id="micBtn" onclick="toggleMic()" title="Mute/Unmute Mic">🎤</button>
+<button class="control-btn" id="camBtn" onclick="toggleCam()" title="Camera On/Off">📹</button>
+<button class="control-btn" onclick="switchCamera()" title="Flip Camera">🔄</button>
+<button class="control-btn hangup-btn" onclick="hangUp()" title="End Call">📞</button>
+<button class="control-btn" onclick="reconnectCall()" title="Reconnect" style="background:var(--warning-color); color:white; font-size:14px;">🔄</button>
+</div>
 </div>
 
+<!-- Call Trigger Card -->
+<div class="card" id="startCallCard">
+<button onclick="startCall()" style="background:var(--success-color); color:white;">🚀 Start Video Call</button>
+</div>
+
+<!-- Chat Card -->
 <div class="card">
 <div class="chat-header">
   <b>Group Chat</b>
   <button class="clear-chat-btn" onclick="clearChat()">Clear Chat</button>
 </div>
 <div id="chatBox"></div>
-<input type="text" id="msgInput" placeholder="Type message">
+<input type="text" id="msgInput" placeholder="Type a message...">
 <button onclick="sendMsg()">Send Text</button>
+
 <div class="file-row">
 <label for="imageInput">📷 Image</label>
 <label for="videoInput">🎥 Video</label>
@@ -109,6 +268,19 @@ video{ width:100%; height:100%; object-fit:cover; }
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
+function changeTheme(themeName) {
+  document.body.setAttribute("data-theme", themeName);
+  localStorage.setItem("preferred_theme", themeName);
+}
+
+window.onload = function() {
+  let savedTheme = localStorage.getItem("preferred_theme");
+  if(savedTheme) {
+    document.body.setAttribute("data-theme", savedTheme);
+    document.getElementById("themeSelector").value = savedTheme;
+  }
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyC1Utqm2gFJMiYRJisnV1I0hcMy5xn9Ods",
   authDomain: "ridhu-app.firebaseapp.com",
@@ -127,8 +299,7 @@ let isHost = false;
 let localStream = null;
 let peers = {}; 
 
-let useFrontCamera = true; // Tracks current camera state
-
+let useFrontCamera = true;
 let mediaRecorder = null;
 let audioChunks = [];
 let localClearedTime = 0;
@@ -144,14 +315,8 @@ async function joinRoom(){
   let nameInp = document.getElementById("nameInput").value.trim();
   let id = document.getElementById("roomInput").value.trim();
   
-  if(!nameInp){
-    alert("Please enter your name!");
-    return;
-  }
-  if(!id){
-    alert("Please enter a Room ID!");
-    return;
-  }
+  if(!nameInp){ alert("Please enter your name!"); return; }
+  if(!id){ alert("Please enter a Room ID!"); return; }
 
   userName = nameInp;
   roomRef = db.collection("rooms").doc(id);
@@ -167,7 +332,6 @@ async function joinRoom(){
       }
     });
   } catch (e) {
-    console.error("Host assignment error:", e);
     isHost = false;
   }
 
@@ -321,12 +485,8 @@ function clearChat(){
     }
     roomRef.collection("chat").get().then(snapshot => {
       let batch = db.batch();
-      snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      batch.commit().then(() => {
-        alert("Chat cleared for everyone successfully!");
-      });
+      snapshot.docs.forEach((doc) => { batch.delete(doc.ref); });
+      batch.commit().then(() => { alert("Chat cleared for everyone successfully!"); });
     });
   } else {
     localClearedTime = Date.now();
@@ -343,6 +503,7 @@ function listenHostCommands(){
         if(localStream){
           let track = localStream.getAudioTracks()[0];
           if(track) track.enabled = false;
+          document.getElementById("micBtn").classList.add("active-off");
           alert("The host has muted your microphone!");
         }
       } else if(cmd.action === "kick"){
@@ -369,7 +530,6 @@ async function getMedia(){
     let localVid = document.getElementById("localVideo");
     if(localVid) localVid.srcObject = localStream;
 
-    // Update tracks for active peer connections if call is ongoing
     for(let id in peers){
       let sender = peers[id].getSenders().find(s => s.track && s.track.kind === 'video');
       if(sender){
@@ -389,6 +549,10 @@ async function switchCamera(){
 
 async function startCall(){
   if(!roomRef){ alert("Please join a room first."); return; }
+  
+  document.getElementById("videoSection").style.display = "block";
+  document.getElementById("startCallCard").style.display = "none";
+
   await getMedia();
   if(!localStream) return;
 
@@ -485,7 +649,7 @@ function createPeerConnection(targetUserId, isInitiator, remoteUserName, remoteI
 
         let kickBtn = document.createElement("button");
         kickBtn.className = "host-btn";
-        kickBtn.style.background = "#b71c1c";
+        kickBtn.style.background = "#ef4444";
         kickBtn.innerText = "Kick";
         kickBtn.onclick = () => hostAction(targetUserId, "kick");
 
@@ -586,13 +750,29 @@ function listenSignals(){
 function toggleMic(){
   if(!localStream) return;
   let track = localStream.getAudioTracks()[0];
-  if(track) track.enabled = !track.enabled;
+  if(track){
+    track.enabled = !track.enabled;
+    let micBtn = document.getElementById("micBtn");
+    if(track.enabled){
+      micBtn.classList.remove("active-off");
+    } else {
+      micBtn.classList.add("active-off");
+    }
+  }
 }
 
 function toggleCam(){
   if(!localStream) return;
   let track = localStream.getVideoTracks()[0];
-  if(track) track.enabled = !track.enabled;
+  if(track){
+    track.enabled = !track.enabled;
+    let camBtn = document.getElementById("camBtn");
+    if(track.enabled){
+      camBtn.classList.remove("active-off");
+    } else {
+      camBtn.classList.add("active-off");
+    }
+  }
 }
 
 async function hangUp(){
@@ -609,6 +789,9 @@ async function hangUp(){
     localStream = null;
   }
 
+  document.getElementById("videoSection").style.display = "none";
+  document.getElementById("startCallCard").style.display = "block";
+
   let videoGrid = document.getElementById("videoGrid");
   videoGrid.innerHTML = `
     <div class="video-card" id="localWrapper">
@@ -618,7 +801,9 @@ async function hangUp(){
       </div>
     </div>
   `;
+  document.getElementById("micBtn").classList.remove("active-off");
+  document.getElementById("camBtn").classList.remove("active-off");
 }
 </script>
 </body>
-</html>-
+</html>

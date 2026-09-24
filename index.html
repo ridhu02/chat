@@ -119,9 +119,10 @@ button:active{ transform:scale(.98); }
 .videoBox{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-bottom: 12px; }
 .video-card{ position:relative; background:#000; border-radius:14px; overflow:hidden; height:220px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-/* Video Mirror Correction Fix */
+/* Video Mirror Correction Fixes */
 video { width: 100%; height: 100%; object-fit: cover; }
-#localVideo { transform: scaleX(-1); } /* Sirf apni video mirror rahegi */
+#localVideo { transform: scaleX(-1); } /* Apni video mirror rahegi */
+.video-card video:not(#localVideo) { transform: scaleX(-1); } /* Doosre user ki video ka left-right fix */
 
 .video-overlay{ position:absolute; bottom:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index: 2; }
 .video-label{ background:rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px); color:white; padding:4px 10px; font-size:12px; border-radius:6px; font-weight: 500; }
@@ -182,7 +183,7 @@ video { width: 100%; height: 100%; object-fit: cover; }
 .rec-start{ background: var(--danger-color) !important; color: white !important; border: none !important; }
 .rec-stop{ background: var(--success-color) !important; color: white !important; border: none !important; }
 
-/* 📱 Mobile Specific Layout: 2 people per line */
+/* 📱 Mobile Specific Layout */
 @media(max-width:600px){ 
   .row { flex-direction: column; } 
   .file-row { flex-direction: column; } 
@@ -215,7 +216,6 @@ video { width: 100%; height: 100%; object-fit: cover; }
 <div class="container">
 <div class="header-container">
   <h2>🎥 Video Call & Secure Chat</h2>
-  <!-- Pastel Dual Color Theme Selector -->
   <select class="theme-select" id="themeSelector" onchange="changeTheme(this.value)">
     <option value="skyblue-white">🩵 Sky Blue & White</option>
     <option value="pink-white">🩷 Soft Pink & White</option>
@@ -231,7 +231,7 @@ video { width: 100%; height: 100%; object-fit: cover; }
 <button onclick="joinRoom()">Join Room</button>
 </div>
 
-<!-- Video Call Section (Hidden initially) -->
+<!-- Video Call Section -->
 <div class="card video-section" id="videoSection">
 <div class="videoBox" id="videoGrid">
 <!-- Local Video -->
